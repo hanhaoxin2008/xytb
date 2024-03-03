@@ -1,7 +1,12 @@
 import time
 import sys
 class xytb(object):
-    def __init__(self,iter,desc="",total=None,out=sys.stdout):
+    def __init__(self,
+                 iter,
+                 desc="",
+                 barLen=10,
+                 total=None,
+                 out=sys.stdout):
 
 
         if total==None:
@@ -10,6 +15,7 @@ class xytb(object):
             self.total=total
         self.iter=iter.__iter__()
         self.out=out
+        self.barLen=barLen
         self.stratTime=time.time()
         self.finish=0
         self.desc=desc+":" if desc else ""
@@ -24,9 +30,9 @@ class xytb(object):
             return "%02d:%02d"%(m,s)
 
     @staticmethod
-    def formatBar(finish,total,elapsedTime):
+    def formatBar(finish,total,elapsedTime,maxBarLen):
 
-        barMaxLen=10
+        barMaxLen=maxBarLen
 
         elapsedTimeStr=xytb.formatTime(elapsedTime)
         speed=(finish/elapsedTime) if  elapsedTime else 0
@@ -45,13 +51,25 @@ class xytb(object):
         out.flush()
     def __next__(self):
         t=int(time.time()-self.stratTime)
-        bar=self.desc+xytb.formatBar(self.finish,self.total,t)
+        bar=self.desc+xytb.formatBar(self.finish,self.total,t,self.barLen)
         self.statusPrint(self.out,bar)
         self.finish+=1
         return self.iter.__next__()
     def __iter__(self):
         return self
 
+
+def rxytb(n):
+    return xytb(range(n))
+
+
+def cxytb(desc="",
+          barLen=10,
+          total=None,
+          out=sys.stdout):
+    def c(n):
+        return xytb(iter=range(n),desc=desc,total=total,barLen=barLen,out=out)
+    return c
 
 
 
