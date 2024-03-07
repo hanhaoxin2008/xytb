@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'xytb',
-    version = '1.0.1',
+    version = '1.0.2',
     keywords='Progress bar',
     description = 'a library for Progress bar',
     license = 'MIT License',

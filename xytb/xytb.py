@@ -1,5 +1,7 @@
+import threading
 import time
 import sys
+import queue
 class xytb(object):
     def __init__(self,
                  iter,
@@ -19,6 +21,11 @@ class xytb(object):
         self.stratTime=time.time()
         self.finish=0
         self.desc=desc+":" if desc else ""
+
+        self.mq=queue.Queue(total)
+
+        self.t=threading.Thread(target=self.mainLoop)
+        self.t.start()
 
     @staticmethod
     def formatTime(t):
@@ -50,14 +57,31 @@ class xytb(object):
         out.write("\r"+s)
         out.flush()
     def __next__(self):
-        t=int(time.time()-self.stratTime)
-        bar=self.desc+xytb.formatBar(self.finish,self.total,t,self.barLen)
-        self.statusPrint(self.out,bar)
-        self.finish+=1
-        return self.iter.__next__()
+        try:
+            t=int(time.time()-self.stratTime)
+            bar=self.desc+xytb.formatBar(self.finish,self.total,t,self.barLen)
+            self.statusPrint(self.out,bar)
+            self.finish+=1
+            return self.iter.__next__()
+        except StopIteration:
+            self.mq.put({"msgtype":0})
     def __iter__(self):
         return self
+    def next(self,desc):
+        self.desc=desc
+        self.__next__()
 
+
+
+    def mainLoop(self):
+        while True:
+            msg=self.mq.get(block=True)
+            if msg["msgtype"]==0:
+                break
+            elif msg["msgtype"]==1:
+                self.next(msg["desc"])
+    def update(self,desc):
+        self.mq.put({"msgtype":1,"desc":desc})
 
 def rxytb(n):
     return xytb(range(n))
@@ -70,6 +94,5 @@ def cxytb(desc="",
     def c(n):
         return xytb(iter=range(n),desc=desc,total=total,barLen=barLen,out=out)
     return c
-
 
 
